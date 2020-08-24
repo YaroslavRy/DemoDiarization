@@ -31,7 +31,7 @@ def save_embeddings():
 
 
 # Make new wavs combining different spkears wavs
-n_speakers = 5
+n_speakers = 2
 max_speakers = 3 
 n_spkrs_utters = 5  # number of uterrances for each speaker
 speakers_list = os.listdir(AUDIO_PATH)
@@ -50,7 +50,7 @@ for i, speaker in enumerate(speakers_list):
         random_spkr_uttr_name = np.random.choice(os.listdir(random_speaker_path))
         random_speaker_file_path = random_speaker_path + '/' + random_spkr_uttr_name
         for j, speaker_file in enumerate(os.listdir(speaker_path)):
-            if j>5:
+            if j>n_spkrs_utters:
                 break
             speaker_file_path = speaker_path + '/' + speaker_file
             spkr_wav = preprocess_wav(speaker_file_path, sampling_rate=sr, trim_silence=False)
