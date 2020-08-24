@@ -4,6 +4,7 @@ from demo_utils import *
 from pathlib import Path
 from time import perf_counter as timer
 from IPython.display import set_matplotlib_formats
+from demo_utils import interactive_diarization
 set_matplotlib_formats('retina')
 from sklearn.decomposition import PCA
 
@@ -12,7 +13,7 @@ from sklearn.decomposition import PCA
 # (telling who is speaking when in a recording).
 
 
-sr = 48000
+sr = 16000
 
 ## Get reference audios
 # Load the interview audio from disk
@@ -22,9 +23,10 @@ wav_fpath = Path("audio_data", "two_voices.m4a")
 wav_fpath = Path("audio_data", "two_voices_b.m4a")
 wav_fpath = Path("audio_data", "two_voices_mark.m4a")
 
-first_n_seconds = 10
+first_n_seconds = 30
 wav = preprocess_wav(wav_fpath, sampling_rate=sr, trim_silence=False)[:sr*first_n_seconds]
-play_wav_file(wav, fs=sr)
+
+# play_wav_file(wav, fs=sr)
 
 # Cut some segments from single speakers as reference audio
 segments = [[0, 5.5], [6.5, 12], [17, 25]]
@@ -43,7 +45,7 @@ speaker_wavs = [wav[int(s[0] * sampling_rate):int(s[1]) * sampling_rate] for s i
 encoder = VoiceEncoder("cpu")
 print("Running the continuous embedding on cpu, this might take a while...")
 start = timer()
-_, cont_embeds, wav_splits = encoder.embed_utterance(wav, return_partials=True, rate=2)
+_, cont_embeds, wav_splits = encoder.embed_utterance(wav, return_partials=True, rate=1.3)
 print('Embeddings got in {} seconds'.format(timer() - start))
 
 
@@ -55,35 +57,37 @@ similarity_dict = {name: cont_embeds @ speaker_embed for name, speaker_embed in
 
 print('Embedding output shape:', cont_embeds.shape)
 
+pca = PCA(n_components=2)
+cont_embeds_reduced = pca.fit_transform(cont_embeds)
 
-for speaker_wav in speaker_wavs:
-    plt.plot(speaker_wav)
-plt.show()
-
+plt.scatter(cont_embeds_reduced[:, 0], cont_embeds_reduced[:, 1])
 
 plt.plot(cont_embeds)
 
-avg_emb_vects = np.mean(cont_embeds, axis=1)
-pca = PCA(n_components=1)
+plt.plot(cont_embeds / np.mean(cont_embeds, axis=0))
 
-emb_vects_reduced = pca.fit_transform(cont_embeds).flatten()
-
-plt.plot(wav)
-plt.plot(avg_emb_vects)
-plt.xticks(np.arange(0, wav.shape[0], sr))
-plt.show()
+plt.plot(np.sin(cont_embeds))
 
 
-size = emb_vects_reduced.shape[0]
-xloc = np.arange(size)
-new_size = wav.shape[0]
-new_xloc = np.linspace(0, size, new_size)
-stretched_avg_emb_vects = np.interp(new_xloc, xloc, emb_vects_reduced)
-plt.plot(stretched_avg_emb_vects)
-plt.show()
-plt.plot(wav)
-plt.show()
-play_wav_file(wav, fs=sr)
+arr = []
+for split in wav_splits:
+    res = cont_embeds @ encoder.embed_utterance(wav[split])
+    arr.append(res)
+
+arr = np.array(arr).flatten()
+
+
+plt.plot(cont_embeds @ speaker_embeds[0])
+
+for wav_split in wav_splits:
+    plt.plot(wav[wav_split])
+
 
 for k, v in similarity_dict.items():
     plt.plot(v, label=k)
+plt.legend()
+plt.show()
+
+play_wav_file(wav, fs=sr)
+
+interactive_diarization(similarity_dict, wav, wav_splits)

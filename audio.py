@@ -119,6 +119,6 @@ def play_wav_file(wav, fs):
 
 
 def load_audio_file(path):
-    data, fs = sf.read(path, dtype='float32')  
+    data, fs = sf.read(path, dtype='float32')
     return data, fs
 
