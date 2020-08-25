@@ -33,10 +33,10 @@ def save_embeddings():
 # Make new wavs combining different spkears wavs
 n_speakers = 2
 max_speakers = 3 
-n_spkrs_utters = 5  # number of uterrances for each speaker
+n_spkrs_utters = 1  # number of uterrances for each speaker
 speakers_list = os.listdir(AUDIO_PATH)
 for i, speaker in enumerate(speakers_list):
-    if i >= n_speakers:
+    if i == n_speakers:
         break
     speaker_path = AUDIO_PATH + speaker
     if not os.path.isdir(speaker_path):
@@ -45,18 +45,18 @@ for i, speaker in enumerate(speakers_list):
     curr_n_speakers = np.random.randint(1, max_speakers+1)
     rndm_spkrs = np.random.choice(speakers_list, curr_n_speakers)
     combined_utters = []
-    for random_speaker in rndm_spkrs:
-        random_speaker_path = AUDIO_PATH + random_speaker
-        random_spkr_uttr_name = np.random.choice(os.listdir(random_speaker_path))
-        random_speaker_file_path = random_speaker_path + '/' + random_spkr_uttr_name
-        for j, speaker_file in enumerate(os.listdir(speaker_path)):
-            if j>n_spkrs_utters:
-                break
-            speaker_file_path = speaker_path + '/' + speaker_file
-            spkr_wav = preprocess_wav(speaker_file_path, sampling_rate=sr, trim_silence=False)
+    
+    for j, speaker_file in enumerate(os.listdir(speaker_path)):
+        if j == n_spkrs_utters:
+            break
+        speaker_file_path = speaker_path + '/' + speaker_file
+        spkr_wav = preprocess_wav(speaker_file_path, sr, trim_silence=False)
+        for random_speaker in rndm_spkrs:
+            random_speaker_path = AUDIO_PATH + random_speaker
+            random_spkr_uttr_name = np.random.choice([x for x in os.listdir(random_speaker_path) if not os.path.isdir(x)])
+            random_speaker_file_path = random_speaker_path + '/' + random_spkr_uttr_name
             random_spkr_wav = preprocess_wav(random_speaker_file_path, sampling_rate=sr, trim_silence=False)
             time_between = np.random.randint(0, 3, 1)[0]
-            combined_utters += list(combine_utters([spkr_wav, random_spkr_wav], sr, time_between))
+            combined_utters += list(combine_utters([combined_utters, random_spkr_wav], sr, time_between))
     filename = PATH_TO_SAVE+speaker + '_' + str(len(rndm_spkrs))
     np.save(filename, combined_utters)
-
