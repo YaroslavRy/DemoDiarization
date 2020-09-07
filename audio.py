@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 29 18:47:11 2020
+
+@author: nemo
+"""
+
 from scipy.ndimage.morphology import binary_dilation
 from hparams import *
 from pathlib import Path
@@ -13,7 +21,7 @@ import soundfile as sf
 int16_max = (2 ** 15) - 1
 
 
-def preprocess_wav(fpath_or_wav: Union[str, Path, np.ndarray], source_sr: Optional[int]=None, sampling_rate=8000, trim_silence=True):
+def preprocess_wav(fpath_or_wav: Union[str, Path, np.ndarray], sampling_rate=8000, trim_silence=True):
     """
     Applies preprocessing operations to a waveform either on disk or in memory such that  
     The waveform will be resampled to match the data hyperparameters.
@@ -32,14 +40,15 @@ def preprocess_wav(fpath_or_wav: Union[str, Path, np.ndarray], source_sr: Option
         wav = fpath_or_wav
     
     # Resample the wav
-    print('source_sr:', source_sr)
+    
     if source_sr != sampling_rate:
+        print('Resample, source_sr:', source_sr, 'sampling_rate:', sampling_rate)
         wav = librosa.resample(wav, source_sr, sampling_rate)
     
     # Apply the preprocessing: normalize volume and shorten long silences 
     wav = normalize_volume(wav, audio_norm_target_dBFS, increase_only=True)
     if trim_silence:
-        wav = trim_long_silences(wav)
+        wav = trim_long_silences(wav, sampling_rate=sampling_rate)
     
     return wav
 
@@ -59,7 +68,7 @@ def wav_to_mel_spectrogram(wav, sampling_rate=8000):
     return frames.astype(np.float32).T
 
 
-def trim_long_silences(wav, sampling_rate=8000):
+def trim_long_silences(wav, sampling_rate):
     """
     Ensures that segments without voice in the waveform remain no longer than a 
     threshold determined by the VAD parameters in params.py.

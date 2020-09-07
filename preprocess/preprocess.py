@@ -1,10 +1,18 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 29 18:47:11 2020
+
+@author: nemo
+"""
+
 
 import torch
 import numpy as np
 from audio import preprocess_wav, play_wav_file, load_audio_file
 import matplotlib.pyplot as plt
 import os
+from sklearn.preprocessing import LabelEncoder
 
 
 # !mkdir audio_data/combined
@@ -13,13 +21,15 @@ PATH_TO_SAVE = './audio_data/combined/'
 sr = 48000
 
 
-def combine_utters(utter_list, sr, time_between):
-    res = list(utter_list[0])
+def combine_utters(utter_list, names, sr):
+    label_enc = LabelEncoder()
+    label_enc.fit(names)
+    res_utters = list(utter_list[0])
+    labels = list(label_enc.transform([names[0]])) * utter_list[0].shape[0]
     for i, utter in enumerate(utter_list[1:]):
-        silence_between = np.random.normal(0, 0.001, int(time_between * sr))
-        res += list(silence_between)
-        res += list(utter)
-    return np.array(res)
+        res_utters += list(utter)
+        labels += list(label_enc.transform([names[i+1]])) * utter.shape[0]
+    return np.array(res_utters), np.array(labels)
 
 
 def get_embeddings():
@@ -31,10 +41,10 @@ def save_embeddings():
 
 
 # Make new wavs combining different spkears wavs
-n_speakers = 2
-max_speakers = 3 
+n_speakers = 999
+max_speakers = 3
 n_spkrs_utters = 1  # number of uterrances for each speaker
-speakers_list = os.listdir(AUDIO_PATH)
+speakers_list = [x for x in os.listdir(AUDIO_PATH) if os.path.isdir(AUDIO_PATH+x)]
 for i, speaker in enumerate(speakers_list):
     if i == n_speakers:
         break
@@ -44,19 +54,27 @@ for i, speaker in enumerate(speakers_list):
     
     curr_n_speakers = np.random.randint(1, max_speakers+1)
     rndm_spkrs = np.random.choice(speakers_list, curr_n_speakers)
-    combined_utters = []
-    
+    wavs = []
+    combined_labels = []
+    times_between = []
     for j, speaker_file in enumerate(os.listdir(speaker_path)):
         if j == n_spkrs_utters:
             break
         speaker_file_path = speaker_path + '/' + speaker_file
-        spkr_wav = preprocess_wav(speaker_file_path, sr, trim_silence=False)
+        spkr_wav = preprocess_wav(speaker_file_path, sampling_rate=sr, trim_silence=True)
+        wavs.append(spkr_wav)
+        combined_labels.append(speaker)
         for random_speaker in rndm_spkrs:
             random_speaker_path = AUDIO_PATH + random_speaker
-            random_spkr_uttr_name = np.random.choice([x for x in os.listdir(random_speaker_path) if not os.path.isdir(x)])
+            random_spkr_uttr_name = np.random.choice([x for x in os.listdir(random_speaker_path) if x[-3:] == 'wav'] )
             random_speaker_file_path = random_speaker_path + '/' + random_spkr_uttr_name
-            random_spkr_wav = preprocess_wav(random_speaker_file_path, sampling_rate=sr, trim_silence=False)
-            time_between = np.random.randint(0, 3, 1)[0]
-            combined_utters += list(combine_utters([combined_utters, random_spkr_wav], sr, time_between))
-    filename = PATH_TO_SAVE+speaker + '_' + str(len(rndm_spkrs))
-    np.save(filename, combined_utters)
+            random_spkr_wav = preprocess_wav(random_speaker_file_path, sampling_rate=sr, trim_silence=True)
+            wavs.append(random_spkr_wav)
+            combined_labels.append(random_speaker)
+    combined_utters, labels_encoded = combine_utters(wavs, combined_labels, sr)
+    filename = PATH_TO_SAVE + speaker + '_' + str(len(rndm_spkrs))
+    filename += '_' + str(np.random.randint(0, 1e+5))
+    np.save(filename, np.array([combined_utters, labels_encoded]))
+
+
+
