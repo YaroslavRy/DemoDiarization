@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from keras.models import Sequential
-from keras.layers import Dense, GRU, Input
-from keras.optimizers import Adam
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, GRU, Input
+from tensorflow.keras.optimizers import Adam
 import numpy as np
-import keras.backend as K
-from keras.utils import plot_model
+import tensorflow.keras.backend as K
+from tensorflow.keras.utils import plot_model
 
 
 def save_model():
@@ -18,12 +18,11 @@ def laod_model():
 
 def build_model(timesteps, lr, gru_units=32, fc_units=16):
     K.clear_session()
-    
     model = Sequential()
     model.add(GRU(units=gru_units, input_shape=(timesteps, 1,), return_sequences=False))
     model.add(Dense(units=fc_units, activation='relu'))
-    model.add(Dense(units=1, activation='sigmoid'))
-    model.compile(optimizer=Adam(lr), loss='binary_crossentropy')
+    model.add(Dense(units=3, activation='softmax'))
+    model.compile(optimizer=Adam(lr), loss='sparse_categorical_crossentropy')
     return model
 
 
@@ -35,10 +34,11 @@ output_dim = 1
 n_layers = 2
 N = 1000
 
+
 X = np.random.normal(size=(N, input_dim, 1))
-y = np.random.randint(0, 2, size=N)
+y = np.random.randint(0, 3, size=(N, 1))
 
 model = build_model(input_dim, lr=lr, gru_units=32, fc_units=16)
 model.summary()
 
-model.fit(X, y, epochs=32)
+model.fit(X, y, epochs=2)
