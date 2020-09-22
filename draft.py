@@ -47,6 +47,7 @@ plt.plot(embed_b)
 
 
 plt.plot(np.mean(np.dot(embed_a, embed_b.T),axis=1))
+plt.plot(np.mean(np.dot(embed_a, embed_c.T),axis=1))
 
 
 plt.plot(e_a)
@@ -59,12 +60,19 @@ np.inner(e_a, e_c)
 # feed every n seconds of utter to NN
 l = 1   # length of utter to feed
 arr = []
-for i in range(int(len(a)/sr)):
-    curr_part = a[i*sr:i+l*sr]
+for i in range(int(len(a)/sr)+1):
+    curr_part = b[i*sr:i+l*sr]
     e_a, embed_a, wav_splits = encoder.embed_utterance(curr_part, 
                                                        return_partials=True,
                                                        min_coverage=1)
     arr.append(e_a)
 
+len(arr)
+
+
+e_a, e_c = arr[1], arr[2]
+
+plt.plot(e_a)
+plt.plot(e_b)
 
 
