@@ -6,6 +6,7 @@ from tensorflow.keras.optimizers import Adam
 import numpy as np
 import tensorflow.keras.backend as K
 from tensorflow.keras.utils import plot_model
+from matplotlib import pyplot as plt
 
 
 def save_model():
@@ -38,7 +39,11 @@ N = 1000
 X = np.random.normal(size=(N, input_dim, 1))
 y = np.random.randint(0, 3, size=(N, 1))
 
+plt.plot(X.flatten())
+
 model = build_model(input_dim, lr=lr, gru_units=32, fc_units=16)
 model.summary()
 
 model.fit(X, y, epochs=2)
+
+

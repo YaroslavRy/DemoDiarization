@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Aug 29 18:47:11 2020
-
-@author: nemo
-"""
-
-
 import torch
 import numpy as np
 from audio import preprocess_wav, play_wav_file, load_audio_file
@@ -32,15 +23,7 @@ def combine_utters(utter_list, names, sr):
     return np.array(res_utters), np.array(labels)
 
 
-def get_embeddings():
-    return
-
-
-def save_embeddings():
-    return
-
-
-# Make new wavs combining different spkears wavs
+# Make new wavs combining different speakers wavs
 n_speakers = 999
 max_speakers = 3
 n_spkrs_utters = 1  # number of uterrances for each speaker
