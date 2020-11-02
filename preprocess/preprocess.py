@@ -5,12 +5,15 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.preprocessing import LabelEncoder
 from utils import save_pickle
+from hparams import sampling_rate
+from tqdm import tqdm
 
 
 # !mkdir audio_data/combined
 AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
 PATH_TO_SAVE = './audio_data/combined/'
-sr = 48000
+sr = sampling_rate
+
 
 
 def combine_utters(utter_list, names, sr):
@@ -24,40 +27,39 @@ def combine_utters(utter_list, names, sr):
     return np.array(res_utters), np.array(labels)
 
 
-# Make new wavs combining different speakers wavs
-n_speakers = 999
-max_speakers = 3
-n_spkrs_utters = 1  # number of uterrances for each speaker
-speakers_list = [x for x in os.listdir(AUDIO_PATH) if os.path.isdir(AUDIO_PATH+x)]
-for i, speaker in enumerate(speakers_list):
-    if i == n_speakers:
-        break
-    speaker_path = AUDIO_PATH + speaker
-    if not os.path.isdir(speaker_path):
-        continue    
-    
-    curr_n_speakers = np.random.randint(1, max_speakers+1)
-    rndm_spkrs = np.random.choice(speakers_list, curr_n_speakers)
-    wavs = []
-    combined_labels = []
-    times_between = []
-    for j, speaker_file in enumerate(os.listdir(speaker_path)):
-        if j == n_spkrs_utters:
-            break
-        speaker_file_path = speaker_path + '/' + speaker_file
-        spkr_wav = preprocess_wav(speaker_file_path, sampling_rate=sr, trim_silence=True)
-        wavs.append(spkr_wav)
-        combined_labels.append(speaker)
-        for random_speaker in rndm_spkrs:
-            random_speaker_path = AUDIO_PATH + random_speaker
-            random_spkr_uttr_name = np.random.choice([x for x in os.listdir(random_speaker_path) if x[-3:] == 'wav'] )
-            random_speaker_file_path = random_speaker_path + '/' + random_spkr_uttr_name
-            random_spkr_wav = preprocess_wav(random_speaker_file_path, sampling_rate=sr, trim_silence=True)
-            wavs.append(random_spkr_wav)
-            combined_labels.append(random_speaker)
-    combined_utters, labels_encoded = combine_utters(wavs, combined_labels, sr)
-    filename = PATH_TO_SAVE + speaker + '_' + str(len(rndm_spkrs))
-    filename += '_' + str(np.random.randint(0, 1e+5)) 
-    # np.save(filename, list([combined_utters, labels_encoded]))
-    save_pickle(list([combined_utters, labels_encoded]), filename)
+def generate_new_conbined_utters(n_speakers, max_speakers, n_spkrs_utters):
+    # Make new wavs combining different speakers wavs
+    speakers_list = [x for x in os.listdir(AUDIO_PATH) if os.path.isdir(AUDIO_PATH+x)]
+    np.random.shuffle(speakers_list)
+    for speaker in tqdm(speakers_list[:n_speakers]):
+        speaker_path = AUDIO_PATH + speaker
+        if not os.path.isdir(speaker_path):
+            continue    
+        
+        curr_n_speakers = np.random.randint(1, max_speakers+1)
+        rndm_spkrs = np.random.choice(speakers_list, curr_n_speakers)
+        wavs = []
+        combined_labels = []
+        times_between = []
+        for j, speaker_file in enumerate(os.listdir(speaker_path)):
+            if j == n_spkrs_utters:
+                break
+            speaker_file_path = speaker_path + '/' + speaker_file
+            spkr_wav = preprocess_wav(speaker_file_path, sampling_rate=sr, trim_silence=True)
+            wavs.append(spkr_wav)
+            combined_labels.append(speaker)
+            for random_speaker in rndm_spkrs:
+                random_speaker_path = AUDIO_PATH + random_speaker
+                random_spkr_uttr_name = np.random.choice([x for x in os.listdir(random_speaker_path) if x[-3:] == 'wav'] )
+                random_speaker_file_path = random_speaker_path + '/' + random_spkr_uttr_name
+                random_spkr_wav = preprocess_wav(random_speaker_file_path, sampling_rate=sr, trim_silence=True)
+                wavs.append(random_spkr_wav)
+                combined_labels.append(random_speaker)
+        combined_utters, labels_encoded = combine_utters(wavs, combined_labels, sr)
+        filename = PATH_TO_SAVE + speaker + '_' + str(len(rndm_spkrs))
+        filename += '_' + str(np.random.randint(0, 1e+5)) 
+        # np.save(filename, list([combined_utters, labels_encoded]))
+        save_pickle(list([combined_utters, labels_encoded]), filename)
 
+
+generate_new_conbined_utters(n_speakers=100, max_speakers=3, n_spkrs_utters=1)
