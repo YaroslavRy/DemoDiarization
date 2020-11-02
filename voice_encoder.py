@@ -149,7 +149,7 @@ class VoiceEncoder(nn.Module):
         with torch.no_grad():
             mels = torch.from_numpy(mels).to(self.device)
             partial_embeds = self(mels).cpu().numpy()
-
+            
         # Compute the utterance embedding from the partial embeddings
         raw_embed = np.mean(partial_embeds, axis=0)
         embed = raw_embed / np.linalg.norm(raw_embed, 2)

@@ -4,6 +4,7 @@ from audio import preprocess_wav, play_wav_file, load_audio_file
 import matplotlib.pyplot as plt
 import os
 from sklearn.preprocessing import LabelEncoder
+from utils import save_pickle
 
 
 # !mkdir audio_data/combined
@@ -56,8 +57,7 @@ for i, speaker in enumerate(speakers_list):
             combined_labels.append(random_speaker)
     combined_utters, labels_encoded = combine_utters(wavs, combined_labels, sr)
     filename = PATH_TO_SAVE + speaker + '_' + str(len(rndm_spkrs))
-    filename += '_' + str(np.random.randint(0, 1e+5))
-    np.save(filename, np.array([combined_utters, labels_encoded]))
-
-
+    filename += '_' + str(np.random.randint(0, 1e+5)) 
+    # np.save(filename, list([combined_utters, labels_encoded]))
+    save_pickle(list([combined_utters, labels_encoded]), filename)
 

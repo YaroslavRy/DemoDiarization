@@ -16,7 +16,7 @@ import librosa
 import struct
 import sounddevice as sd
 import soundfile as sf
-
+import matplotlib.pyplot as plt
 
 int16_max = (2 ** 15) - 1
 
@@ -131,3 +131,10 @@ def load_audio_file(path):
     data, fs = sf.read(path, dtype='float32')
     return data, fs
 
+
+def plot_spectrogram(wav):
+    D = librosa.stft(wav)  # STFT of y
+    S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max)
+    plt.figure()
+    librosa.display.specshow(S_db)
+    plt.colorbar()

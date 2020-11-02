@@ -1,78 +1,75 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from audio import preprocess_wav, play_wav_file, load_audio_file
+from audio import preprocess_wav, play_wav_file, load_audio_file, plot_spectrogram
 import matplotlib.pyplot as plt
+import librosa
+import librosa.display
+plt.style.use('seaborn')
 import os
 from voice_encoder import VoiceEncoder
 plt.style.use('seaborn')
+from utils import load_pickle
+from scipy import signal
 
 
 PATH_TO_SAVE = './audio_data/combined/'
 AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
 sr = 48000
 
-os.listdir(AUDIO_PATH + 'p304/')
+print(os.listdir(AUDIO_PATH + 'p301'))
+
+filepath = AUDIO_PATH + 'p304/p304_232.wav'
+a = preprocess_wav(filepath, sampling_rate=sr)
+
+filepath = './audio_data/combined/p226_1_35897'
+a = np.fromfile(filepath)
+
+wav, labels = load_pickle(filepath)
+
+play_wav_file(wav, fs=sr)
+
+print(a.shape[0]/sr)
+
+plot_spectrogram(wav)
 
 
-a = preprocess_wav(AUDIO_PATH + 'p304/' + 'p304_233.wav', sampling_rate=sr)
-b = preprocess_wav(AUDIO_PATH + 'p304/' + 'p304_228.wav', sampling_rate=sr)
-c = preprocess_wav(AUDIO_PATH + 'p303/' + 'p303_058.wav', sampling_rate=sr)
-
-play_wav_file(a, sr)
-
-encoder = VoiceEncoder("cpu")
+encoder = VoiceEncoder('cpu')
+_, cont_embeds, wav_splits = encoder.embed_utterance(wav, return_partials=True, rate=1)
+wav_splits
 
 
-n = 15750
-e_a, emb, wav_splits = encoder.embed_utterance(a[:n], return_partials=True)
-print('emb shape {}, another shape {}'.format(emb.shape, e_a.shape))
+embedds = []
+labels_emb = []
+slice_len = sr * 0.1
+prev_ind = 0
+for i in range(int(-np.floor(-wav.shape[0]/slice_len))):
+    curr_index = int(prev_ind + slice_len)
+    emb = encoder.embed_utterance(wav[prev_ind: curr_index], return_partials=False, rate=1.5)
+    embedds.append(emb)
+    labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
+    prev_ind = curr_index
 
-a.shape[0]/n
+plt.plot(np.array(embedds).flatten())
 
-e_a, embed_a, wav_splits = encoder.embed_utterance(a, return_partials=True, min_coverage=1)
-e_b, embed_b, wav_splits = encoder.embed_utterance(b, return_partials=True, min_coverage=1)
-e_c, embed_c, wav_splits = encoder.embed_utterance(c, return_partials=True, min_coverage=1)
+plt.plot(embedds)
 
-embed_a.shape
-embed_b.shape
-embed_c.shape
-
-embed_b = embed_b[:embed_a.shape[0]:, ]
-
-plt.plot(a)
-plt.plot(b)
-plt.plot(embed_a)
-plt.plot(embed_b)
+mean_emb = np.mean(embedds, axis=1)
+plt.plot((mean_emb - np.min(mean_emb))/(np.max(mean_emb) - np.min(mean_emb)))
+plt.plot(labels_emb)
 
 
-plt.plot(np.mean(np.dot(embed_a, embed_b.T),axis=1))
-plt.plot(np.mean(np.dot(embed_a, embed_c.T),axis=1))
+for i in labels_emb:
+    plt.hist(i)
 
 
-plt.plot(e_a)
-plt.plot(e_b)
-plt.plot(e_c)
-
-np.inner(e_a, e_c)
-
-
-# feed every n seconds of utter to NN
-l = 1   # length of utter to feed
-arr = []
-for i in range(int(len(a)/sr)+1):
-    curr_part = b[i*sr:i+l*sr]
-    e_a, embed_a, wav_splits = encoder.embed_utterance(curr_part, 
-                                                       return_partials=True,
-                                                       min_coverage=1)
-    arr.append(e_a)
-
-len(arr)
+f, t, Sxx = signal.spectrogram(wav, sr, )
+S_db = librosa.amplitude_to_db(np.abs(Sxx), ref=np.max)
+plt.pcolormesh(t, f, S_db, shading='nearest', cmap=plt.cm.viridis)
+plt.ylabel('Frequency [Hz]')
+plt.xlabel('Time [sec]')
+plt.show()
 
 
-e_a, e_c = arr[1], arr[2]
-
-plt.plot(e_a)
-plt.plot(e_b)
-
-
+plt.specgram(wav, Fs=sr, cmap=plt.cm.inferno)
+plt.plot(labels)
