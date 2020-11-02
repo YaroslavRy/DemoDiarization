@@ -147,7 +147,7 @@ spyder-kernels @ file:///Users/runner/miniforge3/conda-bld/spyder-kernels_159901
 spyder-notebook @ file:///home/conda/feedstock_root/build_artifacts/spyder-notebook_1596108553738/work
 tensorboard==2.3.0
 tensorboard-plugin-wit==1.7.0
-tensorflow==2.3.0
+tensorflow==2.3.1
 tensorflow-estimator==2.3.0
 termcolor==1.1.0
 terminado @ file:///Users/runner/miniforge3/conda-bld/terminado_1600709820535/work
