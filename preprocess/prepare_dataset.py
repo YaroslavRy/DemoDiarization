@@ -33,15 +33,14 @@ sr = sampling_rate
 
 print(os.listdir(COMBINED_UTTERS_PATH)) 
 
-filepath = './audio_data/combined/p228_2_11960'
-
+filepath = './audio_data/combined/p226_3_49895.dat'
 wav, labels = load_pickle(filepath)
 
 play_wav_file(wav, fs=sr)
 
-print(wav.shape[0]/sr)
+# print(wav.shape[0]/sr)
 
-plot_spectrogram(wav)
+# plot_spectrogram(wav)
 
 
 encoder = VoiceEncoder('cpu')
@@ -62,17 +61,15 @@ def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
             embedds.append(emb)
             labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
             prev_ind = curr_index
-        save_pickle([embedds, labels_emb], path_to_save + filename + '.dat')
+        save_pickle([embedds, labels_emb], path_to_save + filename)
 
 
-prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.5)
-
-
+prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.1)
 
 
 labels_all = []
-for i in os.listdir(COMBINED_UTTERS_PATH):
-    wav, labels = load_pickle(COMBINED_UTTERS_PATH + i)
+for i in os.listdir(PATH_TO_SAVE):
+    emb, labels = load_pickle(PATH_TO_SAVE + i)
     labels_all.append(labels)
 
 
