@@ -45,9 +45,6 @@ plot_spectrogram(wav)
 
 
 encoder = VoiceEncoder('cpu')
-_, cont_embeds, wav_splits = encoder.embed_utterance(wav, return_partials=True, rate=1)
-wav_splits
-
 
 
 def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
@@ -69,6 +66,17 @@ def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
 
 
 prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.5)
+
+
+
+
+labels_all = []
+for i in os.listdir(COMBINED_UTTERS_PATH):
+    wav, labels = load_pickle(COMBINED_UTTERS_PATH + i)
+    labels_all.append(labels)
+
+
+plt.hist(np.concatenate(labels_all).flatten())
 
 
 # =============================================================================
