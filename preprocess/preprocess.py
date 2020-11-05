@@ -9,11 +9,7 @@ from hparams import sampling_rate
 from tqdm import tqdm
 
 
-# !mkdir audio_data/combined
-AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
-PATH_TO_SAVE = './audio_data/combined/'
 sr = sampling_rate
-
 
 
 def combine_utters(utter_list, names, sr):
@@ -57,11 +53,15 @@ def generate_new_conbined_utters(n_speakers, max_speakers, n_spkrs_utters, path_
                 combined_labels.append(random_speaker)
         combined_utters, labels_encoded = combine_utters(wavs, combined_labels, sr)
         filename = path_to_save + speaker + '_' + str(len(rndm_spkrs))
-        filename += '_' + str(np.random.randint(0, 1e+5)) + '.dat'
+        filename += '_' + str(np.random.randint(0, 1e+5)) + '.wav'
         # np.save(filename, list([combined_utters, labels_encoded]))
         save_pickle((combined_utters, labels_encoded), filename)
 
 
-generate_new_conbined_utters(n_speakers=2, max_speakers=3, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
+# !mkdir audio_data/combined
+AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
+PATH_TO_SAVE = './audio_data/combined/'
+
+generate_new_conbined_utters(n_speakers=112, max_speakers=3, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
 
 

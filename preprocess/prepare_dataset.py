@@ -23,36 +23,29 @@ from hparams import sampling_rate
 from tqdm import tqdm
 
 
-COMBINED_UTTERS_PATH = './audio_data/combined/'
-PATH_TO_SAVE = './data/combined_embeddings/'
-
 # !mkdir './data/'
 # !mkdir './data/combined_embeddings/'
 
 sr = sampling_rate
 
-print(os.listdir(COMBINED_UTTERS_PATH)) 
 
 filepath = './audio_data/combined/p226_3_49895.dat'
-wav, labels = load_pickle(filepath)
+# wav, labels = load_pickle(filepath)
 
-play_wav_file(wav, fs=sr)
+# play_wav_file(wav, fs=sr)
 
 # print(wav.shape[0]/sr)
 
 # plot_spectrogram(wav)
 
 
-encoder = VoiceEncoder('cpu')
-
-
 def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
     utters_list = os.listdir(path_combined_utters)
+    slice_len *= sr
     for filename in tqdm(utters_list):
         wav, labels = load_pickle(path_combined_utters+filename)
         embedds = []
         labels_emb = []
-        slice_len *= sr
         n_slices = int(-np.floor(-wav.shape[0]/slice_len))  # hack to floor to biggest
         prev_ind = 0
         for i in range(n_slices):
@@ -61,16 +54,21 @@ def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
             embedds.append(emb)
             labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
             prev_ind = curr_index
-        save_pickle([embedds, labels_emb], path_to_save + filename)
+        save_pickle((embedds, labels_emb), path_to_save + filename[:-4] + '.dat')
 
+
+encoder = VoiceEncoder('cpu')
+
+COMBINED_UTTERS_PATH = './audio_data/combined/'
+PATH_TO_SAVE = './data/combined_embeddings/'
 
 prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.1)
 
 
 labels_all = []
 for i in os.listdir(PATH_TO_SAVE):
-    emb, labels = load_pickle(PATH_TO_SAVE + i)
-    labels_all.append(labels)
+     embedds, labels = load_pickle(PATH_TO_SAVE + i)
+     labels_all.append(labels)
 
 
 plt.hist(np.concatenate(labels_all).flatten())
@@ -117,3 +115,10 @@ plt.hist(np.concatenate(labels_all).flatten())
 # plt.plot(labels)
 # 
 # =============================================================================
+
+
+
+for i in range(10):
+    for j in range(5):
+        print(1)
+    print(2)
