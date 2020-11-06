@@ -132,10 +132,3 @@ plt.hist(np.concatenate(labels_all).flatten())
 # plt.plot(labels)
 # 
 # =============================================================================
-
-
-
-for i in range(10):
-    for j in range(5):
-        print(1)
-    print(2)
