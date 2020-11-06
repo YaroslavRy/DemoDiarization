@@ -21,6 +21,7 @@ from utils import load_pickle, save_pickle
 from scipy import signal
 from hparams import sampling_rate
 from tqdm import tqdm
+from concurrent import futures
 
 
 # !mkdir './data/'
@@ -43,6 +44,7 @@ def get_embedds_from_wav(file_path, slice_len):
     wav, labels = load_pickle(file_path)
     embedds = []
     labels_emb = []
+    slice_len *= sr
     n_slices = int(-np.floor(-wav.shape[0]/slice_len))  # hack to floor to biggest
     prev_ind = 0
     for i in range(n_slices):
@@ -56,10 +58,14 @@ def get_embedds_from_wav(file_path, slice_len):
 
 def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
     utters_list = os.listdir(path_combined_utters)
-    slice_len *= sr
     for filename in tqdm(utters_list):
         (embedds, labels_emb) = get_embedds_from_wav(file_path=path_combined_utters + filename, slice_len=slice_len)
         save_pickle((embedds, labels_emb), path_to_save + filename[:-4] + '.dat')
+
+
+def save_emb_utter(file_path, path_to_save, slice_len):
+    (embedds, labels_emb) = get_embedds_from_wav(file_path=file_path, slice_len=slice_len)
+    save_pickle((embedds, labels_emb), path_to_save + file_path[:-4] + '.dat')
 
 
 encoder = VoiceEncoder('cpu')
@@ -67,7 +73,13 @@ encoder = VoiceEncoder('cpu')
 COMBINED_UTTERS_PATH = '../audio_data/combined/'
 PATH_TO_SAVE = '../data/combined_embeddings/'
 
-prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.1)
+# prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.1)
+
+
+with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    files = os.listdir(COMBINED_UTTERS_PATH)
+    file_pathes = [COMBINED_UTTERS_PATH+file for file in files]
+    results = [executor.submit(save_emb_utter, f, PATH_TO_SAVE, 0.1) for f in file_pathes]
 
 
 labels_all = []
