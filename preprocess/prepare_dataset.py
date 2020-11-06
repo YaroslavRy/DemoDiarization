@@ -29,7 +29,7 @@ from tqdm import tqdm
 sr = sampling_rate
 
 
-filepath = './audio_data/combined/p226_3_49895.dat'
+filepath = '../audio_data/combined/p226_3_49895.dat'
 # wav, labels = load_pickle(filepath)
 
 # play_wav_file(wav, fs=sr)
@@ -39,28 +39,33 @@ filepath = './audio_data/combined/p226_3_49895.dat'
 # plot_spectrogram(wav)
 
 
+def get_embedds_from_wav(file_path, slice_len):
+    wav, labels = load_pickle(file_path)
+    embedds = []
+    labels_emb = []
+    n_slices = int(-np.floor(-wav.shape[0]/slice_len))  # hack to floor to biggest
+    prev_ind = 0
+    for i in range(n_slices):
+        curr_index = int(prev_ind + slice_len)
+        emb = encoder.embed_utterance(wav[prev_ind: curr_index], return_partials=False, rate=1.5)
+        embedds.append(emb)
+        labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
+        prev_ind = curr_index
+    return (embedds, labels_emb)
+
+
 def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
     utters_list = os.listdir(path_combined_utters)
     slice_len *= sr
     for filename in tqdm(utters_list):
-        wav, labels = load_pickle(path_combined_utters+filename)
-        embedds = []
-        labels_emb = []
-        n_slices = int(-np.floor(-wav.shape[0]/slice_len))  # hack to floor to biggest
-        prev_ind = 0
-        for i in range(n_slices):
-            curr_index = int(prev_ind + slice_len)
-            emb = encoder.embed_utterance(wav[prev_ind: curr_index], return_partials=False, rate=1.5)
-            embedds.append(emb)
-            labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
-            prev_ind = curr_index
+        (embedds, labels_emb) = get_embedds_from_wav(file_path=path_combined_utters + filename, slice_len=slice_len)
         save_pickle((embedds, labels_emb), path_to_save + filename[:-4] + '.dat')
 
 
 encoder = VoiceEncoder('cpu')
 
-COMBINED_UTTERS_PATH = './audio_data/combined/'
-PATH_TO_SAVE = './data/combined_embeddings/'
+COMBINED_UTTERS_PATH = '../audio_data/combined/'
+PATH_TO_SAVE = '../data/combined_embeddings/'
 
 prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.1)
 

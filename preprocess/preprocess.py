@@ -60,8 +60,9 @@ def generate_new_conbined_utters(n_speakers, max_speakers, n_spkrs_utters, path_
 
 # !mkdir audio_data/combined
 AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
-PATH_TO_SAVE = './audio_data/combined/'
+PATH_TO_SAVE = '../audio_data/combined/'
 
-generate_new_conbined_utters(n_speakers=112, max_speakers=3, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
+for i in range(10):
+    generate_new_conbined_utters(n_speakers=112, max_speakers=3, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
 
 
