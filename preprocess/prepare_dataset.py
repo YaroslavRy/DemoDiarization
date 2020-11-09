@@ -9,7 +9,7 @@ Created on Tue Nov  3 01:28:54 2020
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from audio import preprocess_wav, play_wav_file, load_audio_file, plot_spectrogram
+# from audio import preprocess_wav, play_wav_file, load_audio_file, plot_spectrogram
 import matplotlib.pyplot as plt
 import librosa
 import librosa.display
@@ -19,9 +19,10 @@ from voice_encoder import VoiceEncoder
 plt.style.use('seaborn')
 from utils import load_pickle, save_pickle
 from scipy import signal
-from hparams import sampling_rate
+from hparams import sampling_rate, embeddings_slice_length
 from tqdm import tqdm
 from concurrent import futures
+from sys import getsizeof
 
 
 # !mkdir './data/'
@@ -63,9 +64,12 @@ def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
         save_pickle((embedds, labels_emb), path_to_save + filename[:-4] + '.dat')
 
 
-def save_emb_utter(file_path, path_to_save, slice_len):
+def save_emb_utter(file_path, path_to_save, slice_len, n):
     (embedds, labels_emb) = get_embedds_from_wav(file_path=file_path, slice_len=slice_len)
-    save_pickle((embedds, labels_emb), path_to_save + file_path[:-4] + '.dat')
+    file_name = file_path.split('/')[-1][:-4]
+    save_pickle((embedds, labels_emb), path_to_save + file_name + '.dat')
+    print('saved', n ,file_name) if n%10==0 else None
+    return (embedds, labels_emb)
 
 
 encoder = VoiceEncoder('cpu')
@@ -73,19 +77,27 @@ encoder = VoiceEncoder('cpu')
 COMBINED_UTTERS_PATH = '../audio_data/combined/'
 PATH_TO_SAVE = '../data/combined_embeddings/'
 
-# prepare_dataset(path_combined_utters=COMBINED_UTTERS_PATH, path_to_save=PATH_TO_SAVE, slice_len=0.1)
 
-
-with futures.ThreadPoolExecutor(max_workers=10) as executor:
-    files = os.listdir(COMBINED_UTTERS_PATH)
+emb_slice_len = embeddings_slice_length
+skip_first_n = 0
+with futures.ThreadPoolExecutor() as executor:
+    files = os.listdir(COMBINED_UTTERS_PATH)[skip_first_n:]
     file_pathes = [COMBINED_UTTERS_PATH+file for file in files]
-    results = [executor.submit(save_emb_utter, f, PATH_TO_SAVE, 0.1) for f in file_pathes]
+    results = [executor.submit(save_emb_utter, f, PATH_TO_SAVE, emb_slice_len, i) for i, f in enumerate(file_pathes)]
+
+
+data = []
+for future in futures.as_completed(results):
+    data.append(future.result())
+
+    
+save_pickle(data, 'data/data_embeds.dat')
 
 
 labels_all = []
 for i in os.listdir(PATH_TO_SAVE):
-     embedds, labels = load_pickle(PATH_TO_SAVE + i)
-     labels_all.append(labels)
+      embedds, labels = load_pickle(PATH_TO_SAVE + i)
+      labels_all.append(labels)
 
 
 plt.hist(np.concatenate(labels_all).flatten())

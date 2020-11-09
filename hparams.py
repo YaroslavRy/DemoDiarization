@@ -25,3 +25,6 @@ audio_norm_target_dBFS = -30
 model_hidden_size = 256
 model_embedding_size = 256
 model_num_layers = 3
+
+
+embeddings_slice_length = 0.5   # length in seconds of the window to getting voice charecterestics embeddings from wav
