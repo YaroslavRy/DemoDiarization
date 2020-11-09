@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.preprocessing import LabelEncoder
 from utils import save_pickle
-from hparams import sampling_rate
+from hparams import sampling_rate, max_speakers
 from tqdm import tqdm
 
 
@@ -63,6 +63,6 @@ AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
 PATH_TO_SAVE = '../audio_data/combined/'
 
 for i in range(10):
-    generate_new_conbined_utters(n_speakers=112, max_speakers=3, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
+    generate_new_conbined_utters(n_speakers=112, max_speakers=max_speakers, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
 
 
