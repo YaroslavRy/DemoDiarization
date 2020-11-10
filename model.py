@@ -5,13 +5,31 @@ import numpy as np
 import tensorflow.keras.backend as K
 from tensorflow.keras.utils import plot_model
 from matplotlib import pyplot as plt
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from utils import load_pickle
+plt.style.use('seaborn')
+
+
+data = load_pickle('data/data_embeds.dat')
+data = np.array(data)
+X, y = data[:, 0], data[:, 1]
+
+
+ls_x = []
+ls_y = []
+for d in data:
+    ls_x.append(len(d[0]))
+    ls_y.append(len(d[1]))
+
+plt.hist(ls_x)
+plt.hist(ls_y, alpha=0.5)
 
 
 def save_model():
     return
 
 
-def laod_model():
+def load_model():
     return
 
 
