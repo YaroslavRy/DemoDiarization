@@ -23,6 +23,8 @@ from hparams import sampling_rate, embeddings_slice_length
 from tqdm import tqdm
 from concurrent import futures
 from sys import getsizeof
+from audio import preprocess_wav, play_wav_file
+import time
 
 
 # !mkdir './data/'
@@ -41,8 +43,11 @@ filepath = '../audio_data/combined/p226_3_49895.dat'
 # plot_spectrogram(wav)
 
 
-def get_embedds_from_wav(file_path, slice_len):
-    wav, labels = load_pickle(file_path)
+def get_embedds_from_wav(file_path, slice_len, mode='dataset'):
+    if mode == 'dataset':
+        wav, labels = load_pickle(file_path)
+    else:
+        wav = load_pickle(file_path)
     embedds = []
     labels_emb = []
     slice_len *= sr
@@ -52,20 +57,29 @@ def get_embedds_from_wav(file_path, slice_len):
         curr_index = int(prev_ind + slice_len)
         emb = encoder.embed_utterance(wav[prev_ind: curr_index], return_partials=False, rate=1.5)
         embedds.append(emb)
-        labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
+        if mode == 'dataset':
+            labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
         prev_ind = curr_index
     return (embedds, labels_emb)
 
 
-def prepare_dataset(path_combined_utters, path_to_save, slice_len=0.1):
-    utters_list = os.listdir(path_combined_utters)
-    for filename in tqdm(utters_list):
-        (embedds, labels_emb) = get_embedds_from_wav(file_path=path_combined_utters + filename, slice_len=slice_len)
-        save_pickle((embedds, labels_emb), path_to_save + filename[:-4] + '.dat')
+
+def get_embeds(file_path, slice_len):
+    wav = preprocess_wav(file_path, sampling_rate=sr)
+    embedds = []
+    slice_len *= sr
+    n_slices = int(-np.floor(-wav.shape[0]/slice_len))  # hack to floor to biggest
+    prev_ind = 0
+    for i in range(n_slices):
+        curr_index = int(prev_ind + slice_len)
+        emb = encoder.embed_utterance(wav[prev_ind: curr_index], return_partials=False, rate=1.5)
+        embedds.append(emb)
+        prev_ind = curr_index
+    return embedds
 
 
-def save_emb_utter(file_path, path_to_save, slice_len, n):
-    (embedds, labels_emb) = get_embedds_from_wav(file_path=file_path, slice_len=slice_len)
+def save_emb_utter(file_path, path_to_save, slice_len, n, mode='dataset'):
+    (embedds, labels_emb) = get_embedds_from_wav(file_path=file_path, slice_len=slice_len, mode=mode)
     file_name = file_path.split('/')[-1][:-4]
     save_pickle((embedds, labels_emb), path_to_save + file_name + '.dat')
     print('saved', n ,file_name) if n%10==0 else None
@@ -101,6 +115,22 @@ for i in os.listdir(PATH_TO_SAVE):
 
 
 plt.hist(np.concatenate(labels_all).flatten())
+
+
+wav = load_pickle('audio_data/combined/p225_1_592.wav')[0]
+wav = preprocess_wav(wav, sampling_rate=sr)
+play_wav_file(wav, fs=sr)
+
+# !mkdir data/my_test
+
+start_time = time.time()
+emb = get_embeds('audio_data/test.m4a', 0.5)
+end_time = time.time()
+total_time = end_time - start_time 
+print(f'embedds got in {total_time:.2f} seconds')
+
+
+save_pickle(emb, 'data/my_test/test_voice_embeddings.dat')
 
 
 # =============================================================================
