@@ -33,32 +33,41 @@ def load_model():
     return
 
 
-def build_model(timesteps, lr, gru_units, fc_units, output_shape):
+def build_model(timesteps, n_features, lr, gru_units, fc_units, output_shape):
     K.clear_session()
     model = Sequential()
-    model.add(GRU(units=gru_units, input_shape=(timesteps, 1,), return_sequences=False))
+    model.add(GRU(units=gru_units, input_shape=(timesteps, n_features,), return_sequences=True))
+    model.add(GRU(units=gru_units, return_sequences=False))
     model.add(Dense(units=fc_units, activation='relu'))
     model.add(Dense(units=output_shape, activation='softmax'))
-    model.compile(optimizer=Adam(lr), loss='sparse_categorical_crossentropy')
+    model.compile(optimizer=Adam(lr), loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
 
+X_padded = pad_sequences(X, dtype=float, padding='post')
+y_padded = pad_sequences(y, value=4, padding='post')
+print(X_padded.shape)
+
+n_unique_targets = np.unique(y_padded).shape[0]
+
+
 # TODO: move to config
-lr = 0.001
-batch_size = 32
-input_dim = 100  # represents a sequence length.
-hidden_dim = 256
-output_shape = 3
-n_layers = 2
+lr = 0.01
+batch_size = 64
+gru_units = 256
+input_dim = 46  # represents a sequence length.
+n_features = 256  # number of featues, vectors representing voice characteristics
+output_shape = n_unique_targets
 N = 1000
 
-X = np.random.normal(size=(N, input_dim, 1))
-y = np.random.randint(0, 3, size=(N, 1))
 
-plt.plot(X.flatten())
-plt.show()
-
-model = build_model(input_dim, lr=lr, gru_units=32, fc_units=16, output_shape=output_shape)
+model = build_model(input_dim, n_features, lr=lr, gru_units=gru_units, fc_units=64, output_shape=input_dim)
 model.summary()
 
-model.fit(X, y, epochs=1)
+
+model.fit(X_padded, y_padded, batch_size=batch_size, epochs=100)
+
+
+plt.plot(np.mean(X_padded[1], axis=1))
+
+plt.plot(y_padded[1])
