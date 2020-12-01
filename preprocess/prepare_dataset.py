@@ -64,7 +64,7 @@ def get_embedds_from_wav(file_path, slice_len, mode='dataset'):
 
 
 
-def get_embeds(file_path, slice_len):
+def get_embeds(file_path, slice_len, encoder, sr):
     wav = preprocess_wav(file_path, sampling_rate=sr)
     embedds = []
     slice_len *= sr
@@ -86,91 +86,55 @@ def save_emb_utter(file_path, path_to_save, slice_len, n, mode='dataset'):
     return (embedds, labels_emb)
 
 
-encoder = VoiceEncoder('cpu')
 
-COMBINED_UTTERS_PATH = '../audio_data/combined/'
-PATH_TO_SAVE = '../data/combined_embeddings/'
+if __name__ == '__main__':
 
-
-emb_slice_len = embeddings_slice_length
-skip_first_n = 0
-with futures.ThreadPoolExecutor() as executor:
-    files = os.listdir(COMBINED_UTTERS_PATH)[skip_first_n:]
-    file_pathes = [COMBINED_UTTERS_PATH+file for file in files]
-    results = [executor.submit(save_emb_utter, f, PATH_TO_SAVE, emb_slice_len, i) for i, f in enumerate(file_pathes)]
-
-
-data = []
-for future in futures.as_completed(results):
-    data.append(future.result())
-
+    encoder = VoiceEncoder('cpu')
     
-save_pickle(data, 'data/data_embeds.dat')
+    COMBINED_UTTERS_PATH = '../audio_data/combined/'
+    PATH_TO_SAVE = '../data/combined_embeddings/'
+    
+    
+    emb_slice_len = embeddings_slice_length
+    skip_first_n = 0
+    with futures.ThreadPoolExecutor() as executor:
+        files = os.listdir(COMBINED_UTTERS_PATH)[skip_first_n:]
+        file_pathes = [COMBINED_UTTERS_PATH+file for file in files]
+        results = [executor.submit(save_emb_utter, f, PATH_TO_SAVE, emb_slice_len, i) for i, f in enumerate(file_pathes)]
+    
+    
+    data = []
+    for future in futures.as_completed(results):
+        data.append(future.result())
+    
+        
+    save_pickle(data, '../data/data_embeds.dat')
+    
+    
+    labels_all = []
+    for i in os.listdir(PATH_TO_SAVE):
+          embedds, labels = load_pickle(PATH_TO_SAVE + i)
+          labels_all.append(labels)
+    
+    
+    plt.hist(np.concatenate(labels_all).flatten())
+    
+    
+    # wav = load_pickle('audio_data/combined/p225_1_592.wav')[0]
+    
+    wav = preprocess_wav('audio_data/test.m4a', sampling_rate=sr)
+    play_wav_file(wav, fs=sr)
+    
+    # !mkdir data/my_test
+    
+    start_time = time.time()
+    emb = get_embeds('audio_data/test.m4a', sr=sampling_rate, slice_len=0.5,   encoder=encoder)
+    end_time = time.time()
+    total_time = end_time - start_time 
+    print(f'embedds got in {total_time:.2f} seconds')
+    
+    
+    save_pickle(emb, 'data/my_test/test_voice_embeddings.dat')
+    
 
 
-labels_all = []
-for i in os.listdir(PATH_TO_SAVE):
-      embedds, labels = load_pickle(PATH_TO_SAVE + i)
-      labels_all.append(labels)
-
-
-plt.hist(np.concatenate(labels_all).flatten())
-
-
-wav = load_pickle('audio_data/combined/p225_1_592.wav')[0]
-wav = preprocess_wav(wav, sampling_rate=sr)
-play_wav_file(wav, fs=sr)
-
-# !mkdir data/my_test
-
-start_time = time.time()
-emb = get_embeds('audio_data/test.m4a', 0.5)
-end_time = time.time()
-total_time = end_time - start_time 
-print(f'embedds got in {total_time:.2f} seconds')
-
-
-save_pickle(emb, 'data/my_test/test_voice_embeddings.dat')
-
-
-# =============================================================================
-# 
-# embedds = []
-# labels_emb = []
-# slice_len = sr * 0.5
-# prev_ind = 0
-# for i in range(int(-np.floor(-wav.shape[0]/slice_len))):
-#     curr_index = int(prev_ind + slice_len)
-#     emb = encoder.embed_utterance(wav[prev_ind: curr_index], return_partials=False, rate=1.5)
-#     embedds.append(emb)
-#     labels_emb.append(int(np.median(labels[prev_ind: curr_index])))
-#     prev_ind = curr_index
-# 
-# plt.plot(np.array(embedds).flatten())
-# 
-# plt.plot(embedds)
-# 
-# 
-# mean_emb = np.std(embedds, axis=1)
-# plt.plot((mean_emb - np.min(mean_emb))/(np.max(mean_emb) - np.min(mean_emb)))
-# plt.plot(labels_emb)
-# 
-# for i in labels_emb:
-#     plt.hist(i)
-# 
-# 
-# f, t, Sxx = signal.spectrogram(wav, sr, )
-# S_db = librosa.amplitude_to_db(np.abs(Sxx), ref=np.max)
-# plt.pcolormesh(t, f, S_db, shading='nearest', cmap=plt.cm.viridis)
-# plt.ylabel('Frequency [Hz]')
-# plt.xlabel('Time [sec]')
-# plt.show()
-# 
-# 
-# plt.specgram(wav, Fs=sr, cmap=plt.cm.inferno)
-# plt.grid()
-# 
-# 
-# plt.plot(labels)
-# 
-# =============================================================================

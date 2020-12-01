@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 int16_max = (2 ** 15) - 1
 
 
-def preprocess_wav(fpath_or_wav: Union[str, Path, np.ndarray], sampling_rate=8000, trim_silence=True):
+def preprocess_wav(fpath_or_wav: Union[str, Path, np.ndarray], sampling_rate, trim_silence=True):
     """
     Applies preprocessing operations to a waveform either on disk or in memory such that  
     The waveform will be resampled to match the data hyperparameters.
@@ -34,6 +34,7 @@ def preprocess_wav(fpath_or_wav: Union[str, Path, np.ndarray], sampling_rate=800
     this argument will be ignored.
     """
     # Load the wav from disk if needed
+    source_sr = None
     if isinstance(fpath_or_wav, str) or isinstance(fpath_or_wav, Path):
         wav, source_sr = librosa.load(str(fpath_or_wav), sr=None)
     else:
@@ -41,7 +42,7 @@ def preprocess_wav(fpath_or_wav: Union[str, Path, np.ndarray], sampling_rate=800
     
     # Resample the wav
     
-    if source_sr != sampling_rate:
+    if source_sr and source_sr != sampling_rate:
         print('Resample, source_sr:', source_sr, 'sampling_rate:', sampling_rate)
         wav = librosa.resample(wav, source_sr, sampling_rate)
     

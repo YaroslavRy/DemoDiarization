@@ -28,4 +28,4 @@ model_num_layers = 3
 
 
 embeddings_slice_length = 0.5   # length in seconds of the window to getting voice charecterestics embeddings from wav
-max_speakers = 3
+max_speakers = 4

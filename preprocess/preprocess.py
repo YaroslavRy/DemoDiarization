@@ -9,9 +9,6 @@ from hparams import sampling_rate, max_speakers
 from tqdm import tqdm
 
 
-sr = sampling_rate
-
-
 def combine_utters(utter_list, names, sr):
     label_enc = LabelEncoder()
     label_enc.fit(names)
@@ -58,12 +55,16 @@ def generate_new_conbined_utters(n_speakers, max_speakers, n_spkrs_utters, path_
         save_pickle((combined_utters, labels_encoded), filename)
 
 
-# !mkdir audio_data/combined
-AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
-PATH_TO_SAVE = '../audio_data/combined/'
-
-for i in range(10):
-    generate_new_conbined_utters(n_speakers=112, max_speakers=max_speakers, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
+if __name__ == '__main__':
+    
+    sr = sampling_rate
+    
+    # !mkdir audio_data/combined
+    AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
+    PATH_TO_SAVE = '../audio_data/combined/'
+    
+    for i in range(10):
+        generate_new_conbined_utters(n_speakers=112, max_speakers=max_speakers, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
 
 
 

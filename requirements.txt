@@ -96,6 +96,7 @@ psutil @ file:///Users/runner/miniforge3/conda-bld/psutil_1594826940124/work
 ptyprocess==0.6.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
+PyAudio==0.2.11
 pycodestyle @ file:///home/conda/feedstock_root/build_artifacts/pycodestyle_1589305246696/work
 pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1593275161868/work
 pydocstyle @ file:///home/conda/feedstock_root/build_artifacts/pydocstyle_1598747747227/work
