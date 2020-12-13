@@ -16,20 +16,20 @@ def combine_utters(utter_list, names, sr):
     labels = list(label_enc.transform([names[0]])) * utter_list[0].shape[0]
     for i, utter in enumerate(utter_list[1:]):
         res_utters += list(utter)
-        labels += list(label_enc.transform([names[i+1]])) * utter.shape[0]
+        labels += list(label_enc.transform([names[i + 1]])) * utter.shape[0]
     return np.array(res_utters), np.array(labels)
 
 
 def generate_new_conbined_utters(n_speakers, max_speakers, n_spkrs_utters, path_speakers_audio, path_to_save):
     # Make new wavs combining different speakers wavs
-    speakers_list = [x for x in os.listdir(path_speakers_audio) if os.path.isdir(path_speakers_audio+x)]
+    speakers_list = [x for x in os.listdir(path_speakers_audio) if os.path.isdir(path_speakers_audio + x)]
     np.random.shuffle(speakers_list)
     for speaker in tqdm(speakers_list[:n_speakers]):
         speaker_path = path_speakers_audio + speaker
         if not os.path.isdir(speaker_path):
-            continue    
-        
-        curr_n_speakers = np.random.randint(1, max_speakers+1)
+            continue
+
+        curr_n_speakers = np.random.randint(1, max_speakers + 1)
         rndm_spkrs = np.random.choice(speakers_list, curr_n_speakers)
         wavs = []
         combined_labels = []
@@ -43,7 +43,8 @@ def generate_new_conbined_utters(n_speakers, max_speakers, n_spkrs_utters, path_
             combined_labels.append(speaker)
             for random_speaker in rndm_spkrs:
                 random_speaker_path = path_speakers_audio + random_speaker
-                random_spkr_uttr_name = np.random.choice([x for x in os.listdir(random_speaker_path) if x[-3:] == 'wav'] )
+                random_spkr_uttr_name = np.random.choice(
+                    [x for x in os.listdir(random_speaker_path) if x[-3:] == 'wav'])
                 random_speaker_file_path = random_speaker_path + '/' + random_spkr_uttr_name
                 random_spkr_wav = preprocess_wav(random_speaker_file_path, sampling_rate=sr, trim_silence=True)
                 wavs.append(random_spkr_wav)
@@ -55,16 +56,41 @@ def generate_new_conbined_utters(n_speakers, max_speakers, n_spkrs_utters, path_
         save_pickle((combined_utters, labels_encoded), filename)
 
 
+def combine_utters_from_noisy_dataset(n_speakers, max_speakers, n_spkrs_utters, path_speakers_audio, path_to_save):
+    utters_list = os.listdir(path_speakers_audio)
+    nunique_speakers = np.unique([x[:4] for x in utters_list]).shape[0]
+    for n in range(nunique_speakers):
+        current_n_speakers = np.random.randint(2, max_speakers + 1)
+        wavs = []
+        combined_labels = []
+        curent_utters = np.random.choice(utters_list, size=current_n_speakers)
+        for i, utter_path in enumerate(curent_utters):
+            spkr_wav = preprocess_wav(path_speakers_audio + utter_path, sampling_rate=sr, trim_silence=True)
+            wavs.append(spkr_wav)
+            speaker = utter_path[:4]
+            combined_labels.append(speaker)
+        combined_utters, labels_encoded = combine_utters(wavs, combined_labels, sr)
+        filename = path_to_save + speaker + '_' + str(current_n_speakers)
+        filename += '_' + str(np.random.randint(0, 1e+5)) + '.wav'
+        # np.save(filename, list([combined_utters, labels_encoded]))
+        save_pickle((combined_utters, labels_encoded), filename)
+        print('saved', filename)
+
+
 if __name__ == '__main__':
-    
+
     sr = sampling_rate
-    
+
     # !mkdir audio_data/combined
     AUDIO_PATH = '/Users/nemo/Downloads/DS_10283_2651/VCTK-Corpus/wav48/'
-    PATH_TO_SAVE = '../audio_data/combined/'
-    
+    PATH_TO_SAVE = './audio_data/combined/'
+
     for i in range(10):
-        generate_new_conbined_utters(n_speakers=112, max_speakers=max_speakers, n_spkrs_utters=1, path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
+        generate_new_conbined_utters(n_speakers=112, max_speakers=max_speakers, n_spkrs_utters=1,
+                                     path_speakers_audio=AUDIO_PATH, path_to_save=PATH_TO_SAVE)
 
+    AUDIO_PATH_NOISY = '/Users/nemo/Downloads/DS_10283_1942/noisy_trainset_wav/'
 
-
+    for i in range(100):
+        combine_utters_from_noisy_dataset(n_speakers=112, max_speakers=max_speakers, n_spkrs_utters=1,
+                                          path_speakers_audio=AUDIO_PATH_NOISY, path_to_save=PATH_TO_SAVE)
