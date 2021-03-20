@@ -48,7 +48,7 @@ ipython-genutils==0.2.0
 isort @ file:///Users/runner/miniforge3/conda-bld/isort_1600658800940/work
 jedi @ file:///Users/runner/miniforge3/conda-bld/jedi_1592619352011/work
 jeepney==0.4.3
-Jinja2==2.11.2
+Jinja2==2.11.3
 joblib==0.13.2
 jsonschema==3.2.0
 jupyter-client @ file:///home/conda/feedstock_root/build_artifacts/jupyter_client_1598486169312/work
