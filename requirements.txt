@@ -116,7 +116,7 @@ python-dateutil==2.8.1
 python-jsonrpc-server @ file:///home/conda/feedstock_root/build_artifacts/python-jsonrpc-server_1599827444631/work
 python-language-server @ file:///home/conda/feedstock_root/build_artifacts/python-language-server_1600306384607/work
 pytz==2020.1
-PyYAML==5.3.1
+PyYAML==5.4
 pyzmq==19.0.2
 QDarkStyle @ file:///home/conda/feedstock_root/build_artifacts/qdarkstyle_1597162770358/work
 QtAwesome @ file:///home/conda/feedstock_root/build_artifacts/qtawesome_1600776224730/work
